@@ -26,9 +26,34 @@ npm install @himalaya-quant/synapse
 
 > Make sure `python` (>= 3.6) is available in your system path.
 
+## 🚀 Usage (Node.js)
+
+```ts
+import { Synapse } from '@himalaya-quant/synapse';
+
+const synapseInstance = new Synapse();
+await synapseInstance.spawn('./py_test_module', 'main');
+
+const result = await synapseInstance.call({ foo: 'bar' });
+console.log('🟢 Python response:', result);
+
+await synapseInstance.dispose();
+```
+
 ---
 
 ## 🧪 Example: Python module
+
+This file serves as a reference entry point (main.py) for your Python module used with Synapse. It contains the minimal logic required to receive and process messages from Synapse.
+
+You can either:
+
+- Use it as-is as your default entrypoint
+- Or adapt it to your needs — just make sure to preserve the same message-handling structure.
+  _Failing to do so may result in your Python process not receiving any input from Synapse_
+
+**💡 Tip**: If you’re unsure or just getting started, simply copy this example as it is.
+Replace the call to my_custom_script(payload) with your own function, and remove the sample my_custom_script definition at the bottom.
 
 ### `main.py`
 
@@ -93,29 +118,13 @@ if __name__ == "__main__":
 
 ---
 
-## 🚀 Usage (Node.js)
-
-```ts
-import { Synapse } from '@himalaya-quant/synapse';
-
-const manager = new Synapse();
-await manager.spawn('./py_test_module', 'main');
-
-const result = await manager.call({ foo: 'bar' });
-console.log('🟢 Python response:', result);
-
-await manager.dispose();
-```
-
----
-
 ## 📁 Python module requirements
 
 Each Python module directory should include:
 
 - A Python script (e.g., `main.py`)
-- A `requirements.txt` that contains at least the `msgpack==1.1.0` dependency 
-and all your other dependencies
+- A `requirements.txt` that contains at least the `msgpack==1.1.0` dependency
+  and all your other dependencies
 
 When calling `.spawn()`, the following happens:
 
