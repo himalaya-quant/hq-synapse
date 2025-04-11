@@ -53,7 +53,7 @@ You can either:
   _Failing to do so may result in your Python process not receiving any input from Synapse_
 
 **💡 Tip**: If you’re unsure or just getting started, simply copy this example as it is.
-Replace the call to my_custom_script(payload) with your own function, and remove the sample my_custom_script definition at the bottom.
+Replace the call to `my_custom_script(payload)` with your own function, and remove the sample `my_custom_script` definition.
 
 ### `main.py`
 
