@@ -1,12 +1,13 @@
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { Subject, Subscription, tap } from 'rxjs';
+import { encode, decode } from '@msgpack/msgpack';
+
 import {
     spawn,
     spawnSync,
     ChildProcessWithoutNullStreams,
 } from 'child_process';
-import { encode, decode } from '@msgpack/msgpack';
-import { Subject, Subscription, tap } from 'rxjs';
 
 type QueuedInput = {
     input: any;
@@ -37,8 +38,10 @@ export class InstanceManger {
             .pipe(
                 tap((output) => {
                     this.currentInputResolver(output);
+                    // job done, no need for it anymore
+                    this.inputsQueue.shift();
                     if (this.inputsQueue.length)
-                        this.instanceInputs$.next(this.inputsQueue.shift()!);
+                        this.instanceInputs$.next(this.inputsQueue[0]);
                 })
             )
             .subscribe();
@@ -53,7 +56,7 @@ export class InstanceManger {
         return new Promise((resolver) => {
             this.inputsQueue.push({ input, resolver });
             if (this.inputsQueue.length === 1)
-                this.instanceInputs$.next(this.inputsQueue.shift()!);
+                this.instanceInputs$.next(this.inputsQueue[0]);
         });
     }
 
@@ -61,19 +64,21 @@ export class InstanceManger {
         entrypoint = this.postfixExtension(entrypoint);
 
         this.ensureExistsOrThrow(directory, entrypoint);
-        this.createVirtualEnv(directory);
 
-        if (!existsSync(join(directory, '.venv')))
+        if (!existsSync(join(directory, '.venv'))) {
+            this.createVirtualEnv(directory);
             await this.installDependencies(directory);
+        }
 
         await this.spawnInstance(directory, entrypoint);
     }
 
     async dispose() {
-        this.instance.stdin.end();
         this.instanceInputStreamSubscription.unsubscribe();
         this.instanceOutputStreamSubscription.unsubscribe();
+        if (!this.instance) return;
 
+        this.instance.stdin.end();
         this.instance.kill('SIGTERM');
         const isTerminated = await this.waitForTermination(500);
 
@@ -103,7 +108,7 @@ export class InstanceManger {
         if (!existsSync(directory))
             throw new Error(`Directory "${directory}" does not exist.`);
         if (!existsSync(join(directory, entrypoint)))
-            throw new Error(`Entrypoint "${directory}" does not exist.`);
+            throw new Error(`Entrypoint "${entrypoint}" does not exist.`);
         if (!existsSync(join(directory, 'requirements.txt')))
             throw new Error(`"requirements.txt" file is missing.`);
     }
@@ -129,7 +134,7 @@ export class InstanceManger {
             });
 
             installDeps.stderr.on('data', (data) => {
-                console.error(`stderr: ${data}`);
+                console.log(`stderr: ${data}`);
             });
 
             installDeps.on('close', async (code) => {
@@ -159,7 +164,7 @@ export class InstanceManger {
         // response on the stderr stream so we don't touch the stdin encoding
         this.instance.stderr.on('data', (chunk) => {
             const msg = `🐍 Python: ${chunk.toString()}`;
-            console.error(msg);
+            console.log(msg);
             this.instanceLogs$.next(msg);
         });
     }

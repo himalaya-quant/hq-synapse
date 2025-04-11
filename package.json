@@ -5,7 +5,10 @@
     "scripts": {
         "prepare": "tsc",
         "build": "tsc",
-        "start": "ts-node src/index.ts"
+        "watch": "tsc --watch",
+        "start": "ts-node src/examples/example.ts",
+        "test": "jest --detectOpenHandles",
+        "test:watch": "jest --watch"
     },
     "keywords": [],
     "author": "",
@@ -17,6 +20,10 @@
         }
     },
     "devDependencies": {
+        "@jest/globals": "^29.7.0",
+        "@types/jest": "^29.5.14",
+        "jest": "^29.7.0",
+        "ts-jest": "^29.3.1",
         "@types/node": "^20.17.30",
         "husky": "^9.1.7",
         "prettier": "^3.5.3",
