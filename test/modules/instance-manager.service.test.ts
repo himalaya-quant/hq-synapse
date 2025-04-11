@@ -2,6 +2,7 @@ import { renameSync, rmSync } from 'fs';
 import { resolve } from 'path';
 import { describe, it, expect } from '@jest/globals';
 import { InstanceManger } from '../../src/modules/instance-manager.service';
+import { firstValueFrom, take, tap } from 'rxjs';
 
 describe('InstanceManager', () => {
     let instanceManager: InstanceManger;
@@ -24,7 +25,7 @@ describe('InstanceManager', () => {
         expect(result.foo).toBe('bar');
     });
 
-    it('successfully process an input sequence sequentially', async () => {
+    it('successfully process inputs sequentially', async () => {
         await instanceManager.spawn(pythonTestModule, 'main');
         const result1 = await instanceManager.call({ foo: 'bar1' });
         const result2 = await instanceManager.call({ foo: 'bar2' });
@@ -38,6 +39,23 @@ describe('InstanceManager', () => {
 
         expect(result3).toBeDefined();
         expect(result3.foo).toBe('bar3');
+    });
+
+    it('subscribes to instance logs', async () => {
+        rmSync(resolve(pythonTestModule, '.venv'), { recursive: true });
+        let log: string;
+        const sub = instanceManager.instanceLogs
+            .pipe(
+                tap((_log) => {
+                    log = _log;
+                    sub.unsubscribe();
+                })
+            )
+            .subscribe();
+
+        await instanceManager.spawn(pythonTestModule, 'main');
+        await instanceManager.call({ foo: 'bar' });
+        expect(log!).toBe('🐍 Python: script running\n');
     });
 
     it('successfully process an input sequence in parallel', async () => {
@@ -58,13 +76,23 @@ describe('InstanceManager', () => {
         expect(results[2].foo).toBe('bar3');
     });
 
+    it('successfully respawn an instance after dispose', async () => {
+        await instanceManager.spawn(pythonTestModule, 'main');
+        await instanceManager.dispose();
+        await instanceManager.spawn(pythonTestModule, 'main');
+
+        const result = await instanceManager.call({ foo: 'bar' });
+        expect(result).toBeDefined();
+        expect(result.foo).toBe('bar');
+    });
+
     it('throws if trying to process input before spawning', async () => {
         try {
             await instanceManager.call({ foo: 'bar' });
         } catch (e) {
             expect(e).toBeInstanceOf(Error);
             expect((e as Error).message).toBe(
-                'Cannot send inputs to instance before running it.'
+                'Cannot send inputs to instance before spawning it.'
             );
         }
     });

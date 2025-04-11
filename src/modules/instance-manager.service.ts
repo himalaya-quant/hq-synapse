@@ -15,42 +15,34 @@ type QueuedInput = {
 };
 
 export class InstanceManger {
-    private instance!: ChildProcessWithoutNullStreams;
     private readonly inputsQueue: QueuedInput[] = [];
-    private currentInputResolver!: (value: any) => void;
     private readonly instanceOutputs$ = new Subject<any>();
     private readonly instanceLogs$ = new Subject<string>();
     private readonly instanceInputs$ = new Subject<QueuedInput>();
-    private readonly instanceInputStreamSubscription: Subscription;
-    private readonly instanceOutputStreamSubscription: Subscription;
 
-    constructor() {
-        this.instanceInputStreamSubscription = this.instanceInputs$
-            .pipe(
-                tap(({ input, resolver }) => {
-                    this.currentInputResolver = resolver;
-                    this.packAndSend(input);
-                })
-            )
-            .subscribe();
+    private instance!: ChildProcessWithoutNullStreams;
+    private currentInputResolver!: (value: any) => void;
+    private instanceInputStreamSubscription!: Subscription;
+    private instanceOutputStreamSubscription!: Subscription;
 
-        this.instanceOutputStreamSubscription = this.instanceOutputs$
-            .pipe(
-                tap((output) => {
-                    this.currentInputResolver(output);
-                    // job done, no need for it anymore
-                    this.inputsQueue.shift();
-                    if (this.inputsQueue.length)
-                        this.instanceInputs$.next(this.inputsQueue[0]);
-                })
-            )
-            .subscribe();
+    get instanceLogs() {
+        return this.instanceLogs$.asObservable();
     }
 
-    call(input: any): Promise<any> {
+    /**
+     * Calls the spawned python instance with the given input.
+     * Throws if the instance has not been spawned first.
+     *
+     * @param {object} input Any simple JSON structure will be accepted.
+     * For more details see: https://msgpack.org/
+     *
+     * @returns {ResultType} The result returned from your python script.
+     * @throws {Error} If the instance has not been spawned.
+     */
+    call<ResultType = any>(input: any): Promise<ResultType> {
         if (!this.instance)
             throw new Error(
-                `Cannot send inputs to instance before running it.`
+                `Cannot send inputs to instance before spawning it.`
             );
 
         return new Promise((resolver) => {
@@ -60,6 +52,25 @@ export class InstanceManger {
         });
     }
 
+    /**
+     * Spawns a new python script instance and keeps it alive until dispose is
+     * called. After the spawning you can safely start sending messages to it.
+     * Throws if there's an error during the spawning process.
+     *
+     * What it does:
+     * - Postfixes the extension .py to the entrypoint if missing
+     * - Ensures that the paths are correct and the requirements.txt exists
+     * - Creates a dedicated Python virtual environment
+     * - Installs dependencies via requirements.txt
+     * - Spawns Python script as subprocess
+     * - Reuses instance until explicit disposal avoiding spawn overhead
+     *
+     * @param {string} directory The path pointing to the python module directory.
+     * @param {string} entrypoint The entrypoint file name.
+     *
+     * @returns {Promise<void>} A promise that resolves once the spawn completes.
+     * @throws {Error} If there's an error during the spawning process.
+     */
     async spawn(directory: string, entrypoint: string): Promise<void> {
         entrypoint = this.postfixExtension(entrypoint);
 
@@ -71,11 +82,26 @@ export class InstanceManger {
         }
 
         await this.spawnInstance(directory, entrypoint);
+        this.openSubscriptions();
     }
 
+    /**
+     * Disposes the instance, closing the stdin stream, all the subscriptions
+     * and tries to kill the instance.
+     * Manages graceful and forceful termination, first tries with a SIGTERM, if
+     * after 500ms is not killed, will force a SIGKILL.
+     * Throws if after the SIGKILL the instance is still alive.
+     *
+     * After dispose has been called, you will have to call spawn again. Trying
+     * to send any messages after dispose, will result in an error.
+     *
+     * @returns {Promise<void>} Resolves once the dispose has been done.
+     * @throws {Error} If after forceful termination the instance is still alive
+     */
     async dispose() {
-        this.instanceInputStreamSubscription.unsubscribe();
-        this.instanceOutputStreamSubscription.unsubscribe();
+        this.instanceInputStreamSubscription?.unsubscribe();
+        this.instanceOutputStreamSubscription?.unsubscribe();
+
         if (!this.instance) return;
 
         this.instance.stdin.end();
@@ -164,7 +190,6 @@ export class InstanceManger {
         // response on the stderr stream so we don't touch the stdin encoding
         this.instance.stderr.on('data', (chunk) => {
             const msg = `🐍 Python: ${chunk.toString()}`;
-            console.log(msg);
             this.instanceLogs$.next(msg);
         });
     }
@@ -203,4 +228,27 @@ export class InstanceManger {
             }
         }
     };
+
+    private openSubscriptions() {
+        this.instanceInputStreamSubscription = this.instanceInputs$
+            .pipe(
+                tap(({ input, resolver }) => {
+                    this.currentInputResolver = resolver;
+                    this.packAndSend(input);
+                })
+            )
+            .subscribe();
+
+        this.instanceOutputStreamSubscription = this.instanceOutputs$
+            .pipe(
+                tap((output) => {
+                    this.currentInputResolver(output);
+                    // job done, no need for it anymore
+                    this.inputsQueue.shift();
+                    if (this.inputsQueue.length)
+                        this.instanceInputs$.next(this.inputsQueue[0]);
+                })
+            )
+            .subscribe();
+    }
 }

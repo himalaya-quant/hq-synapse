@@ -53,4 +53,5 @@ def send_message(message):
 
 
 if __name__ == "__main__":
+    print("script running", file=sys.stderr)
     main()

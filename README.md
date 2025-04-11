@@ -122,11 +122,11 @@ if __name__ == "__main__":
 
 Each Python module directory should include:
 
-- A Python script that serves as entry point (e.g., `main.py`), containing the 
-message processing logic, and which calls your own script with each new message.
+- A Python script that serves as entry point (e.g., `main.py`), containing the
+  message processing logic, and which calls your own script with each new message.
 - A `requirements.txt` that contains at least the `msgpack==1.1.0` dependency
   and all your other dependencies
-- Any other Python scripts files that you want to include and import  
+- Any other Python scripts files that you want to include and import
 
 When calling `.spawn()`, the following happens:
 
@@ -135,6 +135,15 @@ When calling `.spawn()`, the following happens:
 3. The module is launched in the virtual environment
 
 ---
+
+## 📕 Note on dependencies installation
+
+To speed up the instantiation process, Synapse checks if a `.venv` directory is
+already present. If so, it assumes that the dependencies are already installed,
+skipping the virtual environment creation process, and the dependencies install.
+
+Be sure to have no `.venv` directory present in the python module if you want
+the dependencies installation process to run.
 
 ## 📚 API
 

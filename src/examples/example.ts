@@ -1,9 +1,12 @@
 import { resolve } from 'path';
 import { Synapse } from '../index';
+import { tap } from 'rxjs';
 const synapse = new Synapse();
 
 async function main() {
+    synapse.dispose();
     await synapse.spawn(resolve(__dirname, '../../py_test'), 'main.py');
+    synapse.instanceLogs.pipe(tap((log) => console.log(log))).subscribe();
 
     let finalMessage = '';
     for (const msg of [
