@@ -9,11 +9,12 @@ It creates isolated Python environments on the fly, manages their lifecycle, and
 ## ✨ Features
 
 - 🔄 Spawns Python scripts as subprocesses
+- ⚡️ Reuses instances until explicit disposal avoiding spawn overhead
 - 🐍 Creates a dedicated Python `venv` automatically
 - 📦 Installs dependencies via `requirements.txt`
-- ⚡ Communicates using binary MessagePack over stdin/stdout
+- 📡 Communicates using binary MessagePack over stdin/stdout
 - ✅ Handles sequential and parallel message flows with queuing
-- 🧹 Manages graceful and forceful termination
+- 🧹 Manages graceful and forceful termination with dispose
 
 ---
 
@@ -113,7 +114,8 @@ await manager.dispose();
 Each Python module directory should include:
 
 - A Python script (e.g., `main.py`)
-- A `requirements.txt` file (can be empty)
+- A `requirements.txt` that contains at least the `msgpack==1.1.0` dependency 
+and all your other dependencies
 
 When calling `.spawn()`, the following happens:
 
