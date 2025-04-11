@@ -157,7 +157,7 @@ export class InstanceManger {
         ]);
 
         this.instance.stdout.on('data', (chunk) => {
-            this.instanceOutputs$.next(decode(chunk));
+            this.handleChunk(chunk);
         });
 
         // we expect all messages (logs, errors, etc) that is not the actual
@@ -181,4 +181,26 @@ export class InstanceManger {
     private postfixExtension(entrypoint: string) {
         return entrypoint.endsWith('.py') ? entrypoint : `${entrypoint}.py`;
     }
+
+    private handleChunk = (chunk: Buffer, messageBuffer = Buffer.alloc(0)) => {
+        messageBuffer = Buffer.concat([messageBuffer, chunk]);
+
+        while (messageBuffer.length >= 4) {
+            const messageLength = messageBuffer.readUInt32LE(0);
+
+            if (messageBuffer.length >= 4 + messageLength) {
+                const messagePayload = messageBuffer.slice(
+                    4,
+                    4 + messageLength
+                );
+                const decoded = decode(messagePayload);
+                this.instanceOutputs$.next(decoded);
+
+                messageBuffer = messageBuffer.slice(4 + messageLength);
+            } else {
+                // Not enough data yet
+                break;
+            }
+        }
+    };
 }

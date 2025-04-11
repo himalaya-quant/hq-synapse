@@ -1,7 +1,8 @@
 {
-    "name": "hq-synapse",
     "version": "1.0.0",
-    "main": "index.js",
+    "name": "@himalaya-quant/synapse",
+    "description": "Bridge Node.js and Python processes with seamless communication.",
+    "main": "dist/index.js",
     "scripts": {
         "prepare": "tsc",
         "build": "tsc",
@@ -10,14 +11,23 @@
         "test": "jest --detectOpenHandles",
         "test:watch": "jest --watch"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "description": "",
+    "keywords": [
+        "node",
+        "python",
+        "bridge",
+        "interop",
+        "venv",
+        "msgpack"
+    ],
+    "author": "Caius Citiriga",
+    "license": "MIT",
     "husky": {
         "hooks": {
             "pre-commit": "pretty-quick --staged"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "devDependencies": {
         "@jest/globals": "^29.7.0",

@@ -1,43 +1,56 @@
-# from binance import fetch_ohlcv
-# from denoised_trend import hpt_denoised_trend
-
-# data = fetch_ohlcv(since_year="2022", since_month="01", since_day="01")
-# denoised_trend_df = hpt_denoised_trend(data)
-# print(denoised_trend_df.head())
 import sys
-import json
+import struct
 import msgpack
 
-packer = msgpack.Packer()
+################################################################################
+# This function is just an example of what could be your script entrypoint
+# You can create as many files you want and import them. They'll just work.
+# This function should be deleted, and this file should be kept as minimal as 
+# possible. Just create your own script file, import it in this one, and call
+# the entry point where this "my_custom_script" is called now.
+################################################################################
+def my_custom_script(payload):
+    # Do something with the payload:
+    # for example you can interpret it as a command caller
+    # or just data to feed to your script
+    # anything that is JSON"ish" will work
+    print("Do something with the payload")
+
+    # You can return any dict here, but remember
+    # to map the correct keys on node
+    return {"data": f"Processing result from py of payload: {payload}"}
+
 
 def main():
     while True:
-        # Read the size of the incoming message (4 bytes for the length)
         length_data = sys.stdin.buffer.read(4)
         if not length_data:
             return
 
-        # Get the length of the payload
         payload_size = int.from_bytes(length_data, byteorder='little')
-        # print("📥 Got payload size:", payload_size, file=sys.stderr)
+        raw_payload = sys.stdin.buffer.read(payload_size)
 
-        # Now read the actual message with the size we just got
-        payload = sys.stdin.buffer.read(payload_size)
-        # print("📥 Got full payload", file=sys.stderr)
+        if raw_payload:
+            payload = msgpack.unpackb(raw_payload)
+        else:
+            sys.stdout.buffer.write(msgpack.packb("empty payload received"))
+            return
 
-        if payload:
-            # Deserialize the message (if it's msgpack)
-            message = msgpack.unpackb(payload)
-            # print("📥 Got unpacked message:", message, file=sys.stderr)
+        ########################################################################
+        #                    PLACE YOUR SCRIPT LOGIC HERE
+        ########################################################################
+        result = my_custom_script(payload)
+        ########################################################################
 
-            # TODO: Do something with the message
+        send_message(result)
 
-            # Write encoded response to stdout and flush it
-            sys.stdout.buffer.write(packer.pack(message))
-            sys.stdout.flush()  # SUPER IMPORTANT
 
-            # print("📤 Sent response", file=sys.stderr)
+def send_message(message):
+    payload = msgpack.packb(message)
+    length = struct.pack("<I", len(payload))  # 4-byte little-endian
+    sys.stdout.buffer.write(length + payload)
+    sys.stdout.buffer.flush()
+
 
 if __name__ == "__main__":
-    print("Running", file=sys.stderr)
     main()

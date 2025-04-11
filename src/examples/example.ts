@@ -6,21 +6,12 @@ async function main() {
 
     let finalMessage = '';
     for (const msg of [
-        { text: 'This ' },
-        { text: 'is ' },
-        { text: 'a ' },
-        { text: 'very ' },
-        { text: 'cool ' },
-        { text: 'way ' },
-        { text: 'of ' },
-        { text: 'using ' },
-        { text: 'python ' },
-        { text: 'scripts ' },
-        { text: 'from ' },
-        { text: 'node ' },
+        { text: 'This is an example payload' },
+        { cmd: 'run_function_x', params: { foo: 'bar', baz: 10 } },
+        [[Date.now(), 12.5, 12.9, 12.3, 12.6, 345]],
     ]) {
         const result = await Synapse.call(msg);
-        finalMessage += result.text;
+        finalMessage += `${result.data}\n`;
     }
 
     await Synapse.dispose();
