@@ -1,8 +1,16 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "name": "@himalaya-quant/synapse",
     "description": "Bridge Node.js and Python processes with seamless communication.",
     "main": "dist/index.js",
+    "homepage": "https://github.com/himalaya-quant/hq-synapse.git#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/himalaya-quant/hq-synapse.git"
+    },
+    "bugs": {
+        "url": "https://github.com/himalaya-quant/hq-synapse/issues"
+    },
     "scripts": {
         "prepare": "tsc",
         "build": "tsc",
