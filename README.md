@@ -122,9 +122,11 @@ if __name__ == "__main__":
 
 Each Python module directory should include:
 
-- A Python script (e.g., `main.py`)
+- A Python script that serves as entry point (e.g., `main.py`), containing the 
+message processing logic, and which calls your own script with each new message.
 - A `requirements.txt` that contains at least the `msgpack==1.1.0` dependency
   and all your other dependencies
+- Any other Python scripts files that you want to include and import  
 
 When calling `.spawn()`, the following happens:
 
