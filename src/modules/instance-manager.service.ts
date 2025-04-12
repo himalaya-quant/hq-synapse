@@ -11,6 +11,7 @@ import {
 
 type QueuedInput = {
   input: any;
+  parse?: boolean;
   resolver: (value: any) => void;
 };
 
@@ -52,16 +53,17 @@ export class InstanceManger {
    *
    * @param {object} input Any simple JSON structure will be accepted.
    * For more details see: https://msgpack.org/
+   * @param {boolean} parse If true automatically tries to parse the result.
    *
    * @returns {ResultType} The result returned from your python script.
    * @throws {Error} If the instance has not been spawned.
    */
-  call<ResultType = any>(input: any): Promise<ResultType> {
+  call<ResultType = any>(input: any, parse = false): Promise<ResultType> {
     if (!this.instance)
       throw new Error(`Cannot send inputs to instance before spawning it.`);
 
     return new Promise((resolver) => {
-      this.inputsQueue.push({ input, resolver });
+      this.inputsQueue.push({ input, resolver, parse });
       if (this.inputsQueue.length === 1)
         this.instanceInputs$.next(this.inputsQueue[0]);
     });
@@ -252,9 +254,25 @@ export class InstanceManger {
     this.instanceOutputStreamSubscription = this.instanceOutputs$
       .pipe(
         tap((output) => {
-          this.currentInputResolver(output);
+          const { parse, resolver } = this.inputsQueue.shift()!;
+          let result;
+          if (!parse) {
+            result = output;
+          } else {
+            try {
+              console.log(output);
+              result = JSON.parse(output);
+            } catch (e) {
+              let msg = `[ERROR] result parsing failed: `;
+              msg += e instanceof Error ? e.message : JSON.stringify(e);
+              this.instanceLogs$.next(msg);
+              result = output;
+            }
+          }
+
+          resolver(result);
+
           // job done, no need for it anymore
-          this.inputsQueue.shift();
           if (this.inputsQueue.length)
             this.instanceInputs$.next(this.inputsQueue[0]);
         })

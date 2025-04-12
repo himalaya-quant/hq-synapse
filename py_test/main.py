@@ -1,14 +1,17 @@
 import sys
 import struct
 import msgpack
+import pandas as pd
 
 ################################################################################
 # This function is just an example of what could be your script entrypoint
 # You can create as many files you want and import them. They'll just work.
-# This function should be deleted, and this file should be kept as minimal as 
+# This function should be deleted, and this file should be kept as minimal as
 # possible. Just create your own script file, import it in this one, and call
 # the entry point where this "my_custom_script" is called now.
 ################################################################################
+
+
 def my_custom_script(payload):
     # Do something with the payload:
     # for example you can interpret it as a command caller
@@ -18,7 +21,7 @@ def my_custom_script(payload):
 
     # You can return any dict here, but remember
     # to map the correct keys on node
-    return {"data": f"Processing result from py of payload: {payload}"}
+    return pd.DataFrame(((10), (10, 20), (30))).values.tolist()
 
 
 def main():
