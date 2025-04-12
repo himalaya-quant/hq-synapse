@@ -1,7 +1,7 @@
 {
     "version": "1.1.0",
     "name": "@himalaya-quant/synapse",
-    "description": "Bridge Node.js and Python processes with seamless communication.",
+    "description": "A lightweight TypeScript utility to spawn and interact with Python modules from Node.js with a native, message-based protocol over stdin/stdout.",
     "main": "dist/index.js",
     "homepage": "https://github.com/himalaya-quant/hq-synapse.git#readme",
     "repository": {
