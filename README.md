@@ -162,7 +162,7 @@ the dependencies installation process to run.
   For this reason you should never need to forcefully parse the response, as
   long as you always return native structures from your python scripts.
   But if for some reason you'd need to return a JSON parsable string, and you
-  want Synapse to prase it automatically for you before delivering the response,
+  want Synapse to parse it automatically for you before delivering the response,
   you can do it by setting `forceJSONParse` to `true`.
 
   ⚠️ Just keep in mind that this will impact performances. Parsing large
