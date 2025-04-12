@@ -40,7 +40,7 @@ export class InstanceManger {
    *
    * every log written this way will pass through this stream.
    *
-   * @returns {Observable} The observable to which you can subscribe to access
+   * @returns The observable to which you can subscribe to access
    * the logs stream.
    */
   get instanceLogs() {
@@ -93,6 +93,8 @@ export class InstanceManger {
    * @throws {Error} If there's an error during the spawning process.
    */
   async spawn(directory: string, entrypoint: string): Promise<void> {
+    if (this.instance) return;
+
     entrypoint = this.postfixExtension(entrypoint);
 
     this.ensureExistsOrThrow(directory, entrypoint);
@@ -218,8 +220,7 @@ export class InstanceManger {
     const lengthBuffer = Buffer.alloc(4); // 4 bytes for the payload size
     lengthBuffer.writeUint32LE(payload.length, 0);
 
-    this.instance.stdin.write(lengthBuffer);
-    this.instance.stdin.write(payload);
+    this.instance.stdin.write(Buffer.concat([lengthBuffer, payload]));
   }
 
   private postfixExtension(entrypoint: string) {
@@ -250,12 +251,7 @@ export class InstanceManger {
 
   private openSubscriptions() {
     this.instanceInputStreamSubscription = this.instanceInputs$
-      .pipe(
-        tap(({ input, resolver }) => {
-          this.currentInputResolver = resolver;
-          this.packAndSend(input);
-        })
-      )
+      .pipe(tap(({ input }) => this.packAndSend(input)))
       .subscribe();
 
     this.instanceOutputStreamSubscription = this.instanceOutputs$
