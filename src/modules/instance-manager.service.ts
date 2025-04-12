@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { Subject, Subscription, tap } from 'rxjs';
+import { Observable, Subject, Subscription, tap } from 'rxjs';
 import { encode, decode } from '@msgpack/msgpack';
 
 import {
@@ -25,6 +25,22 @@ export class InstanceManger {
     private instanceInputStreamSubscription!: Subscription;
     private instanceOutputStreamSubscription!: Subscription;
 
+    /**
+     * Subscription to the instance logs.
+     * If you want your script logs to be seen by Synapse, in your python script
+     * always print to the stderr like:
+     *
+     * ```py
+     * import sys
+     *
+     * print("my log", file=sys.stderr)
+     * ```
+     *
+     * every log written this way will pass through this stream.
+     *
+     * @returns {Observable} The observable to which you can subscribe to access
+     * the logs stream.
+     */
     get instanceLogs() {
         return this.instanceLogs$.asObservable();
     }
