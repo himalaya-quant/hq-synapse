@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { Observable, Subject, Subscription, tap } from 'rxjs';
 import { encode, decode } from '@msgpack/msgpack';
+import { Subject, Subscription, tap } from 'rxjs';
 
 import {
   spawn,
@@ -51,19 +51,23 @@ export class InstanceManger {
    * Calls the spawned python instance with the given input.
    * Throws if the instance has not been spawned first.
    *
-   * @param {object} input Any simple JSON structure will be accepted.
+   * @param input Any simple JSON structure will be accepted.
    * For more details see: https://msgpack.org/
-   * @param {boolean} parse If true automatically tries to parse the result.
+   * @param forceJSONParse Forcefully tries to parse the result. If it
+   * fails, will return the payload as it is.
    *
-   * @returns {ResultType} The result returned from your python script.
+   * @returns The result returned from your python script.
    * @throws {Error} If the instance has not been spawned.
    */
-  call<ResultType = any>(input: any, parse = false): Promise<ResultType> {
+  call<ResultType = any>(
+    input: any,
+    forceJSONParse = false
+  ): Promise<ResultType> {
     if (!this.instance)
       throw new Error(`Cannot send inputs to instance before spawning it.`);
 
     return new Promise((resolver) => {
-      this.inputsQueue.push({ input, resolver, parse });
+      this.inputsQueue.push({ input, resolver, parse: forceJSONParse });
       if (this.inputsQueue.length === 1)
         this.instanceInputs$.next(this.inputsQueue[0]);
     });
@@ -82,10 +86,10 @@ export class InstanceManger {
    * - Spawns Python script as subprocess
    * - Reuses instance until explicit disposal avoiding spawn overhead
    *
-   * @param {string} directory The path pointing to the python module directory.
-   * @param {string} entrypoint The entrypoint file name.
+   * @param directory The path pointing to the python module directory.
+   * @param entrypoint The entrypoint file name.
    *
-   * @returns {Promise<void>} A promise that resolves once the spawn completes.
+   * @returns A promise that resolves once the spawn completes.
    * @throws {Error} If there's an error during the spawning process.
    */
   async spawn(directory: string, entrypoint: string): Promise<void> {
@@ -112,7 +116,7 @@ export class InstanceManger {
    * After dispose has been called, you will have to call spawn again. Trying
    * to send any messages after dispose, will result in an error.
    *
-   * @returns {Promise<void>} Resolves once the dispose has been done.
+   * @returns Resolves once the dispose has been done.
    * @throws {Error} If after forceful termination the instance is still alive
    */
   async dispose() {
@@ -229,11 +233,14 @@ export class InstanceManger {
       const messageLength = this.messageBuffer.readUInt32LE(0);
 
       if (this.messageBuffer.length >= 4 + messageLength) {
-        const messagePayload = this.messageBuffer.slice(4, 4 + messageLength);
+        const messagePayload = this.messageBuffer.subarray(
+          4,
+          4 + messageLength
+        );
         const decoded = decode(messagePayload);
         this.instanceOutputs$.next(decoded);
 
-        this.messageBuffer = this.messageBuffer.slice(4 + messageLength);
+        this.messageBuffer = this.messageBuffer.subarray(4 + messageLength);
       } else {
         // Not enough data yet
         break;
@@ -255,28 +262,31 @@ export class InstanceManger {
       .pipe(
         tap((output) => {
           const { parse, resolver } = this.inputsQueue.shift()!;
-          let result;
-          if (!parse) {
-            result = output;
-          } else {
-            try {
-              console.log(output);
-              result = JSON.parse(output);
-            } catch (e) {
-              let msg = `[ERROR] result parsing failed: `;
-              msg += e instanceof Error ? e.message : JSON.stringify(e);
-              this.instanceLogs$.next(msg);
-              result = output;
-            }
-          }
+          let result = this.extractResult(parse, output);
 
           resolver(result);
 
-          // job done, no need for it anymore
           if (this.inputsQueue.length)
             this.instanceInputs$.next(this.inputsQueue[0]);
         })
       )
       .subscribe();
+  }
+
+  private extractResult(parse: boolean | undefined, output: any) {
+    if (!parse) return output;
+
+    let result: any;
+    try {
+      console.log(output);
+      result = JSON.parse(output);
+    } catch (e) {
+      let msg = `[ERROR] forced parsing failed. Expected parsable str from py: `;
+      msg += e instanceof Error ? e.message : JSON.stringify(e);
+      this.instanceLogs$.next(msg);
+      result = output;
+    }
+
+    return result;
   }
 }

@@ -152,10 +152,22 @@ the dependencies installation process to run.
 - Starts a Python process from the specified entrypoint script inside the given directory.
 - Automatically sets up `.venv` and installs dependencies.
 
-#### `call(input: any): Promise<any>`
+#### `call(input: any, forceJSONParse = false): Promise<any>`
 
 - Sends a serialized MessagePack message to Python and waits for a response.
 - Handles both sequential and parallel calls safely.
+- Optional, it allows forceful JSON parsing of the payload returned from python.
+  Mind that by default MessagePack decodes the payloads into their native type.
+  For example: a python list or tuple, will be converted into a native js Array.
+  For this reason you should never need to forcefully parse the response, as
+  long as you always return native structures from your python scripts.
+  But if for some reason you'd need to return a JSON parsable string, and you
+  want Synapse to prase it automatically for you before delivering the response,
+  you can do it by setting `forceJSONParse` to `true`.
+
+  ⚠️ Just keep in mind that this will impact performances. Parsing large
+  payloads using `JSON.parse` is not efficient like decoding native structs
+  leveraging MessagePack's protocol.
 
 #### `dispose(): Promise<void>`
 
@@ -168,12 +180,12 @@ the dependencies installation process to run.
 
 The included test suite ensures:
 
-- ✔️ Correct responses from Python (`echo`-style)
-- ⟲ Sequential message handling
+- ✔️ Correct responses from Python
+- 🔄 Sequential message handling
 - ⚡ Parallel calls work as expected (with queueing)
 - ❌ Error handling:
-    - Calling before spawn
-    - Missing directories, scripts, or requirements.txt
+  - Calling before spawn
+  - Missing directories, scripts, or requirements.txt
 
 ---
 
@@ -190,6 +202,10 @@ The included test suite ensures:
 
 - [ ] Timeout per `.call()`
 - [ ] Auto-restart on crash
+- [ ] Replace current python entrypoint file with a python library that will take
+      a callback function (your script main function), and handles the messaging
+      aspects under the hood. This will intimidate way less than seeing that big
+      python entrypoint template.
 
 ---
 
