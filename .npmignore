@@ -1,3 +1,4 @@
+test/**/*
 py_test/**/*
 .vscode/**/*
 coverage/**/*
