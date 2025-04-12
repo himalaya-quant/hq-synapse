@@ -2,7 +2,7 @@
 
 A lightweight TypeScript utility to **spawn and interact with Python modules** from Node.js with a native, message-based protocol over stdin/stdout.
 
-It creates isolated Python environments on the fly, manages their lifecycle, and communicates using efficient [MessagePack](https://msgpack.org/index.html) serialization — ideal for ML/data pipelines, custom logic, or tight Python↔Node integrations.
+It creates isolated Python environments on the fly, manages their lifecycle, and communicates using efficient [MessagePack](https://msgpack.org/index.html) serialization — ideal for ML/data pipelines, custom logic, or tight Node ↔️ Python integrations.
 
 ---
 
@@ -191,7 +191,7 @@ The included test suite ensures:
 
 ## 🔑 Design Notes
 
-- Uses `msgpack` for compact and fast I/O.
+- Uses MessagePack for compact and fast I/O.
 - Stdin communication starts with a 4-byte payload length (Little Endian), followed by the packed data.
 - All stderr logs are passed through to a dedicated stream for debugging.
 - Output is routed to a stream so the consumer can listen to responses or logs if needed.
