@@ -1,5 +1,6 @@
-py_test
-.vscode
-coverage
+py_test/**/*
+.vscode/**/*
+coverage/**/*
+src/**/*
 jest.config.js
 tsconfig.json
