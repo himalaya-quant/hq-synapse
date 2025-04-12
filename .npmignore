@@ -3,5 +3,6 @@ py_test/**/*
 .vscode/**/*
 coverage/**/*
 src/**/*
+dist/examples/**/*
 jest.config.js
 tsconfig.json

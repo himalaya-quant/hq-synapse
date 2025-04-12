@@ -1,5 +1,5 @@
 {
-  "version": "1.2.6",
+  "version": "1.2.7",
   "name": "@himalaya-quant/synapse",
   "description": "A lightweight TypeScript utility to spawn and interact with Python modules from Node.js with a native, message-based protocol over stdin/stdout.",
   "main": "dist/index.js",
