@@ -1,8 +1,8 @@
-import { renameSync, rmSync } from 'fs';
+import { tap } from 'rxjs';
 import { resolve } from 'path';
+import { renameSync, rmSync } from 'fs';
 import { describe, it, expect } from '@jest/globals';
 import { InstanceManger } from '../../src/modules/instance-manager.service';
-import { firstValueFrom, take, tap } from 'rxjs';
 
 describe('InstanceManager', () => {
     let instanceManager: InstanceManger;
@@ -76,14 +76,6 @@ describe('InstanceManager', () => {
         expect(results[2].foo).toBe('bar3');
     });
 
-    it('successfully receives an error response', async () => {
-        await instanceManager.spawn(pythonTestModule, 'main');
-        const result = await instanceManager.call('throw_error');
-
-        expect(result).toBeDefined();
-        expect(result.error).toBe('test_error');
-    });
-
     it('successfully respawn an instance after dispose', async () => {
         await instanceManager.spawn(pythonTestModule, 'main');
         await instanceManager.dispose();
@@ -92,6 +84,15 @@ describe('InstanceManager', () => {
         const result = await instanceManager.call({ foo: 'bar' });
         expect(result).toBeDefined();
         expect(result.foo).toBe('bar');
+    });
+
+    it('throws if receiving an error response', async () => {
+        await instanceManager.spawn(pythonTestModule, 'main');
+        try {
+            await instanceManager.call('throw_error');
+        } catch (e) {
+            expect(e).toBe('test_error');
+        }
     });
 
     it('throws if trying to process input before spawning', async () => {

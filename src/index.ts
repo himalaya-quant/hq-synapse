@@ -1,2 +1,1 @@
-import { InstanceManger } from './modules/instance-manager.service';
-export const Synapse = InstanceManger;
+export { InstanceManger as Synapse } from './modules/instance-manager.service';

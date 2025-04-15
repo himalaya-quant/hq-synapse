@@ -13,6 +13,7 @@ type QueuedInput = {
     input: any;
     parse?: boolean;
     resolver: (value: any) => void;
+    rejector: (error: string) => void;
 };
 
 export class InstanceManger {
@@ -49,7 +50,12 @@ export class InstanceManger {
 
     /**
      * Calls the spawned python instance with the given input.
-     * Throws if the instance has not been spawned first.
+     * Throws if the instance has not been spawned first, or if the script sends
+     * an error response.
+     * 
+     * To send an error response, just send the usual message from the script, 
+     * but passing a a dictionary with an "error" key and the error message 
+     * as value. Eg: {"error": "my error message"}
      *
      * @param input Any simple JSON structure will be accepted.
      * For more details see: https://msgpack.org/
@@ -57,7 +63,8 @@ export class InstanceManger {
      * fails, will return the payload as it is.
      *
      * @returns The result returned from your python script.
-     * @throws {Error} If the instance has not been spawned.
+     * @throws {Error} If the instance has not been spawned or an error response
+     * is sent back from the python script
      */
     call<ResultType = any>(
         input: any,
@@ -68,8 +75,13 @@ export class InstanceManger {
                 `Cannot send inputs to instance before spawning it.`,
             );
 
-        return new Promise((resolver) => {
-            this.inputsQueue.push({ input, resolver, parse: forceJSONParse });
+        return new Promise((resolver, rejector) => {
+            this.inputsQueue.push({
+                input,
+                resolver,
+                rejector,
+                parse: forceJSONParse,
+            });
             if (this.inputsQueue.length === 1)
                 this.instanceInputs$.next(this.inputsQueue[0]);
         });
@@ -265,10 +277,12 @@ export class InstanceManger {
         this.instanceOutputStreamSubscription = this.instanceOutputs$
             .pipe(
                 tap((output) => {
-                    const { parse, resolver } = this.inputsQueue.shift()!;
+                    const { parse, resolver, rejector } =
+                        this.inputsQueue.shift()!;
                     let result = this.extractResult(parse, output);
 
-                    resolver(result);
+                    if (result.error) rejector(result.error);
+                    else resolver(result);
 
                     if (this.inputsQueue.length)
                         this.instanceInputs$.next(this.inputsQueue[0]);
@@ -282,7 +296,7 @@ export class InstanceManger {
 
         let result: any;
         try {
-            console.log(output);
+            // console.log(output);
             result = JSON.parse(output);
         } catch (e) {
             let msg = `[ERROR] forced parsing failed. Expected parsable str from py: `;
