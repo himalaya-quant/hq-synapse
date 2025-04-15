@@ -7,11 +7,11 @@ import { randomUUID } from 'crypto';
 const synapse = new Synapse();
 
 async function main() {
-  await synapse.spawn(resolve(__dirname, '../../py_test'), 'main.py');
-  synapse.instanceLogs.pipe(tap((log) => console.log(log))).subscribe();
-  const result = await synapse.call({ baz: 10 }, true);
-  await synapse.dispose();
-  console.log(result);
+    await synapse.spawn(resolve(__dirname, '../../py_test'), 'main.py');
+    synapse.instanceLogs.pipe(tap((log) => console.log(log))).subscribe();
+    const result = await synapse.call({ baz: 10 }, true);
+    await synapse.dispose();
+    console.log(result);
 }
 
 main().then();

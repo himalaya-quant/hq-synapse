@@ -202,6 +202,7 @@ The included test suite ensures:
 
 - [ ] Timeout per `.call()`
 - [ ] Auto-restart on crash
+- [ ] Create a better communication standard between python and node
 - [ ] Replace current python entrypoint file with a python library that will take
       a callback function (your script main function), and handles the messaging
       aspects under the hood. This will intimidate way less than seeing that big

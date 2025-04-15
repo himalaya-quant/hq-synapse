@@ -49,7 +49,7 @@ describe('InstanceManager', () => {
                 tap((_log) => {
                     log = _log;
                     sub.unsubscribe();
-                })
+                }),
             )
             .subscribe();
 
@@ -76,6 +76,14 @@ describe('InstanceManager', () => {
         expect(results[2].foo).toBe('bar3');
     });
 
+    it('successfully receives an error response', async () => {
+        await instanceManager.spawn(pythonTestModule, 'main');
+        const result = await instanceManager.call('throw_error');
+
+        expect(result).toBeDefined();
+        expect(result.error).toBe('test_error');
+    });
+
     it('successfully respawn an instance after dispose', async () => {
         await instanceManager.spawn(pythonTestModule, 'main');
         await instanceManager.dispose();
@@ -92,7 +100,7 @@ describe('InstanceManager', () => {
         } catch (e) {
             expect(e).toBeInstanceOf(Error);
             expect((e as Error).message).toBe(
-                'Cannot send inputs to instance before spawning it.'
+                'Cannot send inputs to instance before spawning it.',
             );
         }
     });
@@ -103,7 +111,7 @@ describe('InstanceManager', () => {
         } catch (e) {
             expect(e).toBeInstanceOf(Error);
             expect((e as Error).message).toBe(
-                `Directory "invalid-directory" does not exist.`
+                `Directory "invalid-directory" does not exist.`,
             );
         }
     });
@@ -114,7 +122,7 @@ describe('InstanceManager', () => {
         } catch (e) {
             expect(e).toBeInstanceOf(Error);
             expect((e as Error).message).toBe(
-                `Entrypoint "invalid-entrypoint.py" does not exist.`
+                `Entrypoint "invalid-entrypoint.py" does not exist.`,
             );
         }
     });
@@ -123,17 +131,17 @@ describe('InstanceManager', () => {
         try {
             renameSync(
                 resolve(pythonTestModule, 'requirements.txt'),
-                resolve(pythonTestModule, '_requirements.txt')
+                resolve(pythonTestModule, '_requirements.txt'),
             );
             await instanceManager.spawn(pythonTestModule, 'main');
         } catch (e) {
             renameSync(
                 resolve(pythonTestModule, '_requirements.txt'),
-                resolve(pythonTestModule, 'requirements.txt')
+                resolve(pythonTestModule, 'requirements.txt'),
             );
             expect(e).toBeInstanceOf(Error);
             expect((e as Error).message).toBe(
-                `"requirements.txt" file is missing.`
+                `"requirements.txt" file is missing.`,
             );
         }
     });

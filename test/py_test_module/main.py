@@ -17,6 +17,10 @@ def main():
             sys.stdout.buffer.write(msgpack.packb("empty payload received"))
             return
 
+        if payload == "throw_error":
+            send_message({"error": "test_error"})
+            return
+
         send_message(payload)
 
 
