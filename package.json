@@ -19,7 +19,9 @@
         "test": "jest --detectOpenHandles",
         "test:watch": "jest --watch",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-        "pub": "npm run build && git add . && git commit -m 'build' && npm version minor && npm publish --registry=https://npm.pkg.github.com"
+        "pub": "npm run build && git add . && git commit -m 'build' && npm version minor && npm run pub:npm && npm run pub:gh",
+        "pub:npm": "npm publish",
+        "pub:gh": "npm publish --registry=https://npm.pkg.github.com"
     },
     "keywords": [
         "node",
