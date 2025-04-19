@@ -165,9 +165,9 @@ the dependencies installation process to run.
   want Synapse to parse it automatically for you before delivering the response,
   you can do it by setting `forceJSONParse` to `true`.
 
-  ⚠️ Just keep in mind that this will impact performances. Parsing large
-  payloads using `JSON.parse` is not efficient like decoding native structs
-  leveraging MessagePack's protocol.
+    ⚠️ Just keep in mind that this will impact performances. Parsing large
+    payloads using `JSON.parse` is not efficient like decoding native structs
+    leveraging MessagePack's protocol.
 
 #### `dispose(): Promise<void>`
 
@@ -184,8 +184,8 @@ The included test suite ensures:
 - 🔄 Sequential message handling
 - ⚡ Parallel calls work as expected (with queueing)
 - ❌ Error handling:
-  - Calling before spawn
-  - Missing directories, scripts, or requirements.txt
+    - Calling before spawn
+    - Missing directories, scripts, or requirements.txt
 
 ---
 
@@ -200,7 +200,8 @@ The included test suite ensures:
 
 ## 🔮 Future Improvements
 
-- [ ] Timeout per `.call()`
+- [ ] Timeout per `.call()` to prevent promise hanging in case of unhandled
+      python script error. (or implement logic in py lib? Maybe both)
 - [ ] Auto-restart on crash
 - [ ] Create a better communication standard between python and node
 - [ ] Replace current python entrypoint file with a python library that will take

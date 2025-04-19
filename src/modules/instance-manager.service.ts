@@ -52,9 +52,9 @@ export class InstanceManger {
      * Calls the spawned python instance with the given input.
      * Throws if the instance has not been spawned first, or if the script sends
      * an error response.
-     * 
-     * To send an error response, just send the usual message from the script, 
-     * but passing a a dictionary with an "error" key and the error message 
+     *
+     * To send an error response, just send the usual message from the script,
+     * but passing a a dictionary with an "error" key and the error message
      * as value. Eg: {"error": "my error message"}
      *
      * @param input Any simple JSON structure will be accepted.

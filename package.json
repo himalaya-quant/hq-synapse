@@ -18,7 +18,8 @@
         "start": "ts-node src/examples/example.ts",
         "test": "jest --detectOpenHandles",
         "test:watch": "jest --watch",
-        "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\""
+        "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+        "pub": "npm run build && git add . && git commit -m 'build' && npm version minor && npm publish --registry=https://npm.pkg.github.com"
     },
     "keywords": [
         "node",
