@@ -25,6 +25,7 @@ export class InstanceManger {
     private messageBuffer = Buffer.alloc(0);
     private instance!: ChildProcessWithoutNullStreams;
     private currentInputResolver!: (value: any) => void;
+    private currentInputRejector!: (error: string) => void;
     private instanceInputStreamSubscription!: Subscription;
     private instanceOutputStreamSubscription!: Subscription;
 
@@ -82,6 +83,8 @@ export class InstanceManger {
                 rejector,
                 parse: forceJSONParse,
             });
+            this.currentInputRejector = rejector;
+            this.currentInputResolver = resolver;
             if (this.inputsQueue.length === 1)
                 this.instanceInputs$.next(this.inputsQueue[0]);
         });
@@ -228,8 +231,12 @@ export class InstanceManger {
         // we expect all messages (logs, errors, etc) that is not the actual
         // response on the stderr stream so we don't touch the stdin encoding
         this.instance.stderr.on('data', (chunk) => {
-            const msg = `🐍 Python: ${chunk.toString()}`;
+            const cstring = chunk.toString() as String;
+            const msg = `🐍 Python: ${cstring}`;
             this.instanceLogs$.next(msg);
+
+            if (cstring.startsWith('[ERROR'))
+                this.currentInputRejector(chunk.toString());
         });
     }
 
